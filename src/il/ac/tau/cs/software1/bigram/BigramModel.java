@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Locale;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.FileReader;
+import java.io.FileWriter;
 
 public class BigramModel {
     public static final int MAX_VOCABULARY_SIZE = 14500;
@@ -144,14 +146,55 @@ public class BigramModel {
      * @pre: fileName is a legal file path
      */
     public void saveModel(String fileName) throws IOException { // Question 3
-        // TODO: implement
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName + VOC_FILE_SUFFIX))) {
+            writer.write(mVocabulary.length + " words\n");
+            for (int i = 0; i < mVocabulary.length; i++) {
+            writer.write(i + "," + mVocabulary[i] + "\n");
+        }
+        }
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName + COUNTS_FILE_SUFFIX))) {
+            for (int wordIndex = 0; wordIndex < mVocabulary.length; wordIndex++) {
+                for (int nextWordIndex = 0; nextWordIndex < mVocabulary.length; nextWordIndex++) {
+                    if (mBigramCounts[wordIndex][nextWordIndex] != 0) {
+                        writer.write(wordIndex + "," + nextWordIndex + ":");
+                        writer.write(mBigramCounts[wordIndex][nextWordIndex] + "\n");
+                    }
+                }
+            }
+        }
     }
 
     /*
      * @pre: fileName is a legal file path
      */
     public void loadModel(String fileName) throws IOException { // Question 4
-        // TODO: implement
+        String[] vocabulary;
+        int vocabularySize;
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName + VOC_FILE_SUFFIX))) {
+            String line = reader.readLine();
+            vocabularySize = Integer.parseInt(line.split(" ")[0]); //split at space and take first part as size
+            vocabulary = new String[vocabularySize];
+
+            for (int i = 0; i < vocabularySize; i++) {
+                line = reader.readLine();
+                String[] parts = line.split(",",2); //split at first comma only
+                int index = Integer.parseInt(parts[0]);
+                vocabulary[index] = parts[1];
+            }
+        }
+        int[][] counts = new int[vocabularySize][vocabularySize];
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName + COUNTS_FILE_SUFFIX))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(":"); //split at colon to separate indices from count
+                String[] indices = parts[0].split(","); //split at comma to get word indices
+                int wordIndex = Integer.parseInt(indices[0]);
+                int nextWordIndex = Integer.parseInt(indices[1]);
+                counts[wordIndex][nextWordIndex] = Integer.parseInt(parts[1]);
+            }
+        }
+        mBigramCounts = counts;
+        mVocabulary = vocabulary;
     }
 
     /*
@@ -161,8 +204,21 @@ public class BigramModel {
      * @post: if sentence is probable, according to the model, $ret = true, else, $ret = false
      */
     public boolean isLegalSentence(String sentence) { // Question 5
-        // TODO: implement
-        return false;
+        if (sentence.isEmpty()) {
+            return true;
+        }
+        String[] words = sentence.split(" ");
+        if (words.length == 1) {
+        return getWordIndex(words[0]) != ELEMENT_NOT_FOUND;
+        }
+        for (int i = 0; i < words.length - 1; i++) {
+            int index1 = getWordIndex(words[i]);
+            int index2 = getWordIndex(words[i+1]);
+            if (index1 == ELEMENT_NOT_FOUND || index2 == ELEMENT_NOT_FOUND || mBigramCounts[index1][index2] == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     ///////////////////////////////////////////////////////////////////////////
