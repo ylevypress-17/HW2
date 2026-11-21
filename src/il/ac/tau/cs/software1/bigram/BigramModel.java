@@ -1,7 +1,10 @@
 package il.ac.tau.cs.software1.bigram;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Locale;
+import java.io.BufferedReader;
+import java.io.FileReader;
 
 public class BigramModel {
     public static final int MAX_VOCABULARY_SIZE = 14500;
@@ -79,8 +82,27 @@ public class BigramModel {
      * @post: mBigramCounts = prev(mBigramCounts)
      */
     public String[] buildVocabularyIndex(String fileName) throws IOException { // Question 1
-        // TODO: implement
-        return null;
+        String[] vocabulary = new String[MAX_VOCABULARY_SIZE];
+        int vocabularySize = 0;
+        // create a BufferedReader to read the file line by line
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null && vocabularySize < MAX_VOCABULARY_SIZE) {
+                String trimmed = line.trim();
+                // after trimming we check word by word (make sure vocab is still smaller than maxsize) normalize and add to vocabulary if not already present
+               for (String word : trimmed.split("\\s+")) {
+                if (vocabularySize == MAX_VOCABULARY_SIZE) {
+                break;}
+                String normalizedWord  = normalizeWord(word);
+                if (normalizedWord != null && findIndex(vocabulary, normalizedWord) == ELEMENT_NOT_FOUND) { 
+                    vocabulary[vocabularySize] = normalizedWord;
+                    vocabularySize++;
+                    }
+                }
+            }
+        }
+        String[] result = Arrays.copyOf(vocabulary, vocabularySize);
+        return result;
     }
 
     /*
@@ -88,8 +110,33 @@ public class BigramModel {
      * @post: mBigramCounts = prev(mBigramCounts)
      */
     public int[][] buildCountsArray(String fileName, String[] vocabulary) throws IOException { // Question 2
-        // TODO: implement
-        return null;
+        int[][] counts = new int[vocabulary.length][vocabulary.length];
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                // after trimming the line we check word by word,
+                // normalize and find index, then increment counts
+            int prevIndex = ELEMENT_NOT_FOUND;
+                for (String token : trimmed.split("\\s+")) {
+                    String word = normalizeWord(token);
+                    int currentIndex;
+                    if (word == null) {
+                    currentIndex = ELEMENT_NOT_FOUND;
+                    } else {
+                        currentIndex = findIndex(vocabulary, word);
+                        }
+                    if (prevIndex != ELEMENT_NOT_FOUND && currentIndex != ELEMENT_NOT_FOUND) {
+                        counts[prevIndex][currentIndex]++;
+                    }
+                    prevIndex = currentIndex;
+                }
+            }
+        }
+        return counts;
     }
 
     /*
