@@ -7,34 +7,41 @@ public class NaiveInventory implements Inventory {
 
 	private static final int INITIAL_CAPACITY = 100;
 
-	// TODO: add the fields:
-	//       - an array of Collectibles (it may be larger than the number of items actually stored)
-	//       - an int that counts how many items are actually stored
+	private Collectible[] collectibles;
+	private int currentCount;
 
 	public NaiveInventory() {
-		// TODO: implement
+		collectibles = new Collectible[INITIAL_CAPACITY];
+		currentCount = 0;
 	}
 
 	@Override
 	public void collect(Collectible collectible) {
-		// TODO: implement
+		if (currentCount == collectibles.length) {
+			Collectible[] expanded = new Collectible[collectibles.length * 2];
+			System.arraycopy(collectibles, 0, expanded, 0, currentCount);
+			collectibles = expanded;
+		}
+		collectibles[currentCount] = collectible;
+		currentCount++;
 	}
 
 	@Override
 	public float getTotalWeight() {
-		// TODO: implement
-		return 0.f;
+		float totalWeight = 0.f;
+		for (int i = 0; i < currentCount; i++) {
+			totalWeight += collectibles[i].getWeight();
+		}
+		return totalWeight;
 	}
 
 	@Override
 	public int getCurrentCount() {
-		// TODO: implement
-		return 0;
+		return currentCount;
 	}
 
 	// Returns the array of Collectibles that is stored in the field of this class
 	public Collectible[] getCollArr() {
-		// TODO: implement
-		return null;
+		return collectibles;
 	}
 }
